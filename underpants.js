@@ -21,6 +21,10 @@ var _ = {};
 *   _.identity({a: "b"}) === {a: "b"}
 */
 
+_.identity = function(value) {
+	//return the value as is
+	return value;
+}
 
 /** _.typeOf
 * Arguments:
@@ -42,6 +46,23 @@ var _ = {};
 * _.typeOf([1,2,3]) -> "array"
 */
 
+_.typeOf = function(value) {
+	//check if value is an object
+	if (typeof value !== "object") {
+		//takes care of number, string, boolean, undefined, and function
+		return typeof value;
+	} else { //values of type "object" need special treatment
+		if (value === null) { //check if value is null
+			return "null";
+		} else if (Array.isArray(value)) { //check if value is an array
+			return "array";
+		} else if (value instanceof Date) { //check if value is a date
+			return "date";
+		} else { //once we've ruled out all the special cases, return "object"
+			return "object";
+		}
+	}
+}
 
 /** _.first
 * Arguments:
@@ -61,6 +82,37 @@ var _ = {};
 *   _.first(["a", "b", "c"], 2) -> ["a", "b"]
 */
 
+_.first = function(array, num) {
+	//check if array isn't actually an array
+	if (!Array.isArray(array)) {
+		//if not, return an empty array
+		return [];
+	} else {
+		//may have to adjust the number of elements to return from the provided number, but the input num is the starting point
+		let numToReturn = num;
+		//if num wasn't provided or isn't a number, will return the first element of the array
+		if (!num || typeof num !== "number") {
+			numToReturn = 1;
+		//if the provided num is negative, will return an empty array
+		} else if (num < 0) {
+			numToReturn = 0;
+		}
+		//make certain we don't try to return more elements than we actually have
+		if (numToReturn > array.length) {
+			numToReturn = array.length;
+		}
+		
+		//return statements
+
+		//special case - if only one element is to be returned, return it as itself rather than wrapped in an array
+		if (numToReturn === 1) {
+			return array[0]; 
+		} else { //otherwise, use slice to access the first elements of the array, using the adjusted to-return value
+			//if no elements are to be returned, this will return an empty array
+			return array.slice(0, numToReturn);
+		}
+	}
+}
 
 /** _.last
 * Arguments:
@@ -80,6 +132,39 @@ var _ = {};
 *   _.last(["a", "b", "c"], 2) -> ["b", "c"]
 */
 
+_.last = function(array, num) {
+	//the part about deciding how many elements to return is exactly the same as in _.first(), the only difference is which elements
+	
+	//check if array isn't actually an array
+	if (!Array.isArray(array)) {
+		//if not, return an empty array
+		return [];
+	} else {
+		//may have to adjust the number of elements to return from the provided number, but the input num is the starting point
+		let numToReturn = num;
+		//if num wasn't provided or isn't a number, will return the last element of the array
+		if (!num || typeof num !== "number") {
+			numToReturn = 1;
+		//if the provided num is negative, will return an empty array
+		} else if (num < 0) {
+			numToReturn = 0;
+		}
+		//make certain we don't try to return more elements than we actually have
+		if (numToReturn > array.length) {
+			numToReturn = array.length;
+		}
+		
+		//return statements
+
+		//special case - if only one element is to be returned, return it as itself rather than wrapped in an array
+		if (numToReturn === 1) {
+			return array[array.length - 1]; 
+		} else { //otherwise, use slice to access the first elements of the array, using the adjusted to-return value
+			//if no elements are to be returned, this will return an empty array
+			return array.slice(array.length - numToReturn);
+		}
+	}
+}
 
 /** _.indexOf
 * Arguments:
@@ -97,6 +182,18 @@ var _ = {};
 *   _.indexOf(["a","b","c"], "d") -> -1
 */
 
+_.indexOf = function(array, value) {
+	//loop through array
+	for (let i = 0; i < array.length; i++) {
+		//check if each element is the target value
+		if (array[i] === value) {
+			//if so, return the index. This will only find the first occurrence of value because the function exits upon the first occurance
+			return i;
+		}
+	}
+	//if the loop finished without finding a match, return -1
+	return -1;
+}
 
 /** _.contains
 * Arguments:
@@ -113,6 +210,24 @@ var _ = {};
 *   _.contains([1,"two", 3.14], "two") -> true
 */
 
+//TODO: edge case with no value. I assume the function as written will just treat it like undefined and look for undefined in the array (which could appear, I suppose) but I don't know if that's the correct behavior. I think in this case it would make more sense for the function to throw an error if it doesn't get the arguments it expects than to silently search for undefined.
+_.contains = function(array, value) {
+	/* Normal implementation:
+	//loop through array
+	for (let i = 0; i < array.length; i++) {
+		//check if each element is the target value
+		if (array[i] === value) {
+			//if so, return true
+			return true;
+		}
+	}
+	//if the loop finished without finding a match, return false
+	return false;
+	*/
+
+	//using the ternary operator
+	return _.indexOf(array, value) !== -1 ? true : false;
+}
 
 /** _.each
 * Arguments:
@@ -130,6 +245,21 @@ var _ = {};
 *      -> should log "a" "b" "c" to the console
 */
 
+_.each = function(collection, func) {
+	//check if collection is an array
+	if (Array.isArray(collection)) {
+		//loop over the array
+		for (let i = 0; i < collection.length; i++) {
+			//invoke the callback function and pass each element, its index, and the whole array
+			func(collection[i], i, collection);
+		}
+	} else { //if not, assume it's an object
+		for (let key in collection) {
+			//invoke the callback and pass each key/value pair and the whole object
+			func(collection[key], key, collection);
+		}
+	}
+}
 
 /** _.unique
 * Arguments:
@@ -141,6 +271,22 @@ var _ = {};
 *   _.unique([1,2,2,4,5,6,5,2]) -> [1,2,4,5,6]
 */
 
+_.unique = function(array) {
+	//initialize empty array to store unique values
+	let uniques = [];
+
+	//loop over the input array
+	for (let i = 0; i < array.length; i++) {
+		//use indexOf() to check whether this element already exists in uniques
+		if (_.indexOf(uniques, array[i]) === -1) {
+			//if not, add it. If so, skip the element
+			uniques.push(array[i]);
+		}
+	}
+
+	//return uniques
+	return uniques;
+}
 
 /** _.filter
 * Arguments:
@@ -158,6 +304,21 @@ var _ = {};
 *   use _.each in your implementation
 */
 
+_.filter = function(array, testFunc) {
+	//declare empty array to store results
+	let returnArr = [];
+	
+	//Solution that uses _.each() to complete the bonus objective
+	//The anonymous callback function passed to each() can access the testFunc and the returnArr because they are in its outer scope
+	//I would never have thought to write this function like this if I weren't trying to use each
+	//see _.reject to see the for-loop approach that is more intuitive to me
+	_.each(array, (elem, i, arr) => {
+		if (testFunc(elem, i, arr)) returnArr.push(elem);
+	});
+
+	//return results
+	return returnArr;
+}
 
 /** _.reject
 * Arguments:
@@ -172,6 +333,22 @@ var _ = {};
 *   _.reject([1,2,3,4,5], function(e){return e%2 === 0}) -> [1,3,5]
 */
 
+_.reject = function(array, testFunc) {
+	//declare empty array to store results
+	let returnArr = [];
+
+	//loop over the input array
+	for (let i = 0; i < array.length; i++) {
+		//check if each element *fails* the test
+		if (!testFunc(array[i], i, array)) {
+			//only add it to the results array if it fails
+			returnArr.push(array[i]);
+		}
+	}
+
+	//return results
+	return returnArr;
+}
 
 /** _.partition
 * Arguments:
@@ -192,6 +369,24 @@ var _ = {};
 }
 */
 
+_.partition = function(array, func) {
+	//you could use _.filter() and _.reject() to get the two sub arrays, but that results in iterating over the input array twice.
+	//it's better to rewrite the loop (or in this case, use _.each()) and only iterate once
+	
+	//initialize two empty arrays to store elements that pass and that fail
+	let passed = [];
+	let failed = [];
+
+	//use _.each() to apply the test function to each element in the array
+	_.each(array, (elem, i, array) => {
+		//the result of the test function determines which array to push the element to
+		func(elem, i, array) ? passed.push(elem) : failed.push(elem);
+	});
+
+
+	//return an array of the passed and failed arrays
+	return [passed, failed];
+}
 
 /** _.map
 * Arguments:
@@ -209,6 +404,32 @@ var _ = {};
 *   _.map([1,2,3,4], function(e){return e * 2}) -> [2,4,6,8]
 */
 
+_.map = function(collection, func) {
+	//initialize empty array to store results
+	let returnArr = [];
+
+	//check if the input collection is an array
+	if(Array.isArray(collection)) {
+		//loop over the array
+		for (let i = 0; i < collection.length; i++) {
+			//apply the function to each element in the array, then save in the results array
+			//callback function also takes the index and the entire collection
+			returnArr.push(func(collection[i], i, collection));
+		}
+	} else {
+		//if the imput is not an array, we can assume it's a normal object.
+		//Any other types will just bypass the for loop and return an empty array since they won't have keys 
+		//loop over the keys in the object
+		for (let key in collection) {
+			//apply to function to each key/value pair in the array, then save in the result array
+			//callback function takes value, key, and the entire collection
+			returnArr.push(func(collection[key], key, collection));
+		}
+	}
+
+	//return results
+	return returnArr;
+}
 
 /** _.pluck
 * Arguments:
@@ -221,6 +442,11 @@ var _ = {};
 *   _.pluck([{a: "one"}, {a: "two"}], "a") -> ["one", "two"]
 */
 
+_.pluck = function(array, prop) {
+	//use _.map() to create array of values, then return the array
+	//Map's callback function is an anonymous function that takes an object and returns the value corresponding to prop on that object
+	return _.map(array, (elem) => elem[prop]);
+}
 
 /** _.every
 * Arguments:
@@ -242,6 +468,53 @@ var _ = {};
 *   _.every([2,4,6], function(e){return e % 2 === 0}) -> true
 *   _.every([1,2,3], function(e){return e % 2 === 0}) -> false
 */
+
+_.every = function(collection, func) {
+	//check if collection is an array
+	if (Array.isArray(collection)) {
+		//check if function exists
+		if (!func) {
+			//if no function was given, loop over every element of array and return false if any element is falsy
+			for (let i = 0; i < collection.length; i++) {
+				if (!collection[i]) {
+					return false;
+				}
+			}
+			//if all elements are truthy, return true
+			return true;
+		} else {
+			//if a test function was given, loop over every element of array and return false if any element fails the function
+			for (let i = 0; i < collection.length; i++) {
+				if (!func(collection[i], i, collection)) {
+					return false;
+				}
+			}
+			//if all elements pass, return true
+			return true;
+		}
+	} else { //if collection is not an array, assume it's an object
+		//check if function exists
+		if (!func) {
+			//if no function was given, loop over every key/value pair in object and return false if any value is falsy
+			for (let key in collection) {
+				if (!collection[key]) {
+					return false;
+				}
+			}
+			//if every value on the object is truthy, return true
+			return true;
+		} else {
+			//if a test function was given, loop over every key/value pair in object and return false if any pair fails the test function
+			for (let key in collection) {
+				if (!func(collection[key], key, collection)) {
+					return false;
+				}
+			}
+			//if every key/value pair passes, return true
+			return true;
+		}
+	}
+}
 
 
 /** _.some
@@ -265,6 +538,52 @@ var _ = {};
 *   _.some([1,2,3], function(e){return e % 2 === 0}) -> true
 */
 
+_.some = function(collection, func) {
+	//check if collection is an array
+	if (Array.isArray(collection)) {
+		//check if function exists
+		if (!func) {
+			//if no function was given, loop over every element of array and return true if any element is truthy
+			for (let i = 0; i < collection.length; i++) {
+				if (collection[i]) {
+					return true;
+				}
+			}
+			//if all elements are falsy, return false
+			return false;
+		} else {
+			//if a test function was given, loop over every element of array and return true if any element passes the function
+			for (let i = 0; i < collection.length; i++) {
+				if (func(collection[i], i, collection)) {
+					return true;
+				}
+			}
+			//if all elements fail, return false
+			return false;
+		}
+	} else { //if collection is not an array, assume it's an object
+		//check if function exists
+		if (!func) {
+			//if no function was given, loop over every key/value pair in object and return true if any value is truthy
+			for (let key in collection) {
+				if (collection[key]) {
+					return true;
+				}
+			}
+			//if every value on the object is falsy, return false
+			return false;
+		} else {
+			//if a test function was given, loop over every key/value pair in object and return true if any pair passes the test function
+			for (let key in collection) {
+				if (func(collection[key], key, collection)) {
+					return true;
+				}
+			}
+			//if every key/value pair fails, return false
+			return false;
+		}
+	}
+}
 
 /** _.reduce
 * Arguments:
@@ -285,6 +604,28 @@ var _ = {};
 *   _.reduce([1,2,3], function(previousSum, currentValue, currentIndex){ return previousSum + currentValue }, 0) -> 6
 */
 
+_.reduce = function(array, func, seed) {
+	//declare currentResult and startingIndex
+	let currentResult, startingIndex;
+
+	//if no seed is provided, use the first element as the seed and skip it during the for loop
+	if (seed === undefined) {
+		currentResult = array[0];
+		startingIndex = 1;
+	} else { //otherwise, use the seed as the initial value and start iterating at the beginning of the array
+		currentResult = seed;
+		startingIndex = 0;
+	}
+
+	//loop over the array, starting at either the first or second element, depending on whether the first element is used as the seed
+	for (let i = startingIndex; i < array.length; i++) {
+		//update the currentResult variable based on the function
+		currentResult = func(currentResult, array[i], i);
+	}
+
+	//return the final result after iterating over the whole array
+	return currentResult;
+}
 
 /** _.extend
 * Arguments:
@@ -300,6 +641,22 @@ var _ = {};
 *   _.extend(data, {b:"two"}); -> data now equals {a:"one",b:"two"}
 *   _.extend(data, {a:"two"}); -> data now equals {a:"two"}
 */
+
+_.extend = function(data, ...objects) {
+	//iterate over the objects provided to copy from, however many there may be
+	for (let i = 0; i < objects.length; i++) {
+		//iterate over the keys in each object
+		for (let key in objects[i]) {
+			//set the value of key on data to the same value as on object[i]
+			//if key does not exist on data, this will create it
+			//if it does, this will overwrite it with object[i]'s value
+			data[key] = objects[i][key];
+		}
+	}
+
+	//return the edited data object
+	return data;
+}
 
 //////////////////////////////////////////////////////////////////////
 // DON'T REMOVE THIS CODE ////////////////////////////////////////////
